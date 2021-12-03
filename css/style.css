@@ -1,0 +1,34 @@
+.bg-vino{
+    background-color: #9d2449;
+}
+
+.color-white a{
+    color: #fff;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #9d2449;
+    color: rgb(255, 255, 255);
+}
+
+.btn-vino{
+    background-color: #9d2449;
+    color: #fff;
+}
+
+.btn-vino:hover{
+    color: #fff;
+}
+
+.hidden{
+    display: none;
+}
+
+.block{
+    display: block;
+}
+
+.valid {
+    background-color: #198754 !important;
+    color: #fff !important;
+}
