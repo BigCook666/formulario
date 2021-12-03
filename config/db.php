@@ -4,6 +4,7 @@ return array(
     "port" => "5432",
     "user"=> "postgres",
     "pass" => 'Monarca404',
-    "database" => "test"
+    "database" => "test",
+    "options" => '--client_encoding=UTF8',
 );
 ?>

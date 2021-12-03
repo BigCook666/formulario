@@ -1,47 +1,50 @@
 <?php
-class EntidadBase
+
+class ModeloBase
 {
-    private $db;
-    private $conectar;
-    public function __construct()
+    // database config 
+    function __construct()
     {
         $this->db = null;
-        require_once '../bd/core.php';
+        require_once './bd/core.php';
         $this->conectar = new Conectar();
         $this->db = $this->conectar->conn();
+    }
+
+    public function close_db()
+    {
+        if (!pg_close($this->db)) {
+            print "Failed to close connection to " . pg_host($this->db) . ": " .
+                pg_last_error($this->db) . "<br/>\n";
+        }
     }
 
     public function runQuery($sql)
     {
         try {
-            $query = pg_prepare($this->db,"options",$sql);
-            $query = pg_execute($this->db,"options");
+            $query = pg_query($this->db, $sql);
             while ($row = pg_fetch_object($query)) {
                 $resultSet[] = $row;
             }
+            $this->close_db();
             return $resultSet;
         } catch (PDOException $e) {
-            return "e";
+            $this->close_db();
+            throw $e;
         }
     }
 
-    public function getAll($table)
+    public function selectTable($table)
     {
-        $stmt = $this->db->query("SELECT * FROM $this->table ORDER BY id DESC");
-        while ($row = $stmt->fetchObject()) {
-            $resultSet[] = $row;
+        try {
+            $query = pg_prepare($this->db, "select", "SELECT * FROM modalidad_tramite_e1 WHERE id = $1");
+            $query = pg_execute($this->db, "select", array($table));
+            $res = pg_fetch_object($query);
+            $this->close_db();
+            return $res;
+        } catch (Exception $e) {
+            $this->close_db();
+            throw $e;
         }
-
-        return $resultSet;
-    }
-
-    public function getAllBy($column, $val)
-    {
-        $stmt = $this->db->query("SELECT * FROM $this->table WHERE $column='$val'");
-        while ($row = $stmt->fetchObject()) {
-            $resultSet[] = $row;
-        }
-
-        return $resultSet;
     }
 }

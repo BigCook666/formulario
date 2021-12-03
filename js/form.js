@@ -1,10 +1,10 @@
-// !Importaciones
-import { getOptions, REGLAS, TABS} from "./functions/functions";
+// !Imports
+import { inputQualifier, navigationTab } from "./functions/functions";
 
-// !Carga del DOM
+// !Post loading of the DOM
 $(document).ready(function () {
-  //Predeterminados en Form_Persona
-  // !Fecha predeterminada
+  // !Form_Persona options
+  // !Preset today's date
   // ?source: https://jsfiddle.net/7LXPq/93/
   var now = new Date();
   var day = ("0" + now.getDate()).slice(-2);
@@ -13,52 +13,13 @@ $(document).ready(function () {
   $("#form_Persona_Fecha").val(today);
 });
 
-
-// !Tab changer
-function nextTab(id) {
-  $(`#nav_${id.toLowerCase()}_tab`).addClass("valid");
-  let tab = TABS.find((tab) => tab.form === id);
-  tab.next();
-}
-function previousTab(id) {
-  let tab = TABS.find((tab) => tab.form === id);
-  tab.before();
-}
-
-// !Validación de todos los campos al submit
-function postRevision(form) {
-  let valid = true;
-  form.querySelectorAll("input").forEach((input) => {
-    if (
-      !input.className.includes("is-valid") &&
-      !input.className.includes("is-invalid")
-    ) {
-      valid = false;
-      $(`#${input.id}`).addClass("is-invalid");
-    }
-  });
-  return valid;
-}
-
-// !Validación del form_persona
+// !creating event listeners for each form
 document.querySelectorAll('form[class = "form"]').forEach((form) => {
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    if (postRevision(form)) {
-      nextTab(form.id);
-    }
-  });
-  form.querySelectorAll("input").forEach((input) => {
-    input.addEventListener("focus", function () {
-      this.addEventListener("input", function (e) {
-        const type = REGLAS.find((regla) => regla.id === `${this.type}`);
-        type[`${this.type}`](this, e)
-          ? $(this).removeClass("is-invalid").addClass("is-valid")
-          : $(this).removeClass("is-valid").addClass("is-invalid");
-      });
-    });
-  });
+  navigationTab(form);
+  inputQualifier(form);
 });
+
+
 
 // Ajax query
 $("#formulario_persona").submit(function (event) {

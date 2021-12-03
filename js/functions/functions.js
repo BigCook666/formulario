@@ -1,8 +1,8 @@
-//!Función para validar un RFC
+//!Function to validate an RFC
 // ?source: https://es.stackoverflow.com/a/31714
-// Devuelve el RFC sin espacios ni guiones si es correcto
-// Devuelve false si es inválido
-// (debe estar en mayúsculas, guiones y espacios intermedios opcionales)
+// Returns the RFC without spaces or hyphens if correct
+// Returns false if invalid
+// (must be in capital letters, hyphens and optional spaces in between)
 function rfcValido(rfc, aceptarGenerico = true) {
   const re =
     /^([A-ZÑ&]{3,4}) ?(?:- ?)?(\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])) ?(?:- ?)?([A-Z\d]{2})([A\d])$/;
@@ -44,22 +44,24 @@ function rfcValido(rfc, aceptarGenerico = true) {
     return false;
   return rfcSinDigito + digitoVerificador;
 }
-//!Handler para el evento cuando cambia el input
-// -Lleva la RFC a mayúsculas para validarlo
-// -Elimina los espacios que pueda tener antes o después
+//!event listener input for RFC
+// -Capitalise the RFC to validate it.
+// -Eliminate any gaps that may occur before or after
 function validarRfc(input) {
   var rfcCorrecto = rfcValido($(input).val().trim().toUpperCase()); // ⬅️ Acá se comprueba
   return rfcCorrecto;
 }
 
-// *Reglas de validación
-export const REGLAS = [
+// *validation rules
+const REGLAS = [
   {
     id: "text",
     min: 3,
     text: function (input, e) {
       if (input.id.includes("Rfc")) {
         return validarRfc(input);
+      } else if (input.id.includes("N_Local")) {
+        return $(input).val().length >= 1 ? true : false;
       } else {
         return $(input).val().length >= this.min ? true : false;
       }
@@ -69,7 +71,7 @@ export const REGLAS = [
     id: "tel",
     min: 12,
     tel: function (input, e) {
-      if (input.id == "form_Empresa_Tel_Oficina") {
+      if (input.id.includes("Oficina")) {
         return $(input).val().length == 4 ? true : false;
       } else {
         if (
@@ -120,7 +122,7 @@ export const REGLAS = [
   },
 ];
 
-// !Tabs instances
+// !Tabs Boostrap instances
 var tabFormPersona = document.querySelector("#nav_form_persona_tab");
 var showTabPersona = new bootstrap.Tab(tabFormPersona);
 
@@ -133,8 +135,8 @@ var showTabDocumentos = new bootstrap.Tab(tabFormDocumentos);
 var tabFormModalidad = document.querySelector("#nav_form_modalidad_tab");
 var showTabModalidad = new bootstrap.Tab(tabFormModalidad);
 
-// !Tabs
-export const TABS = [
+// !Tabs methods
+const TABS = [
   {
     form: "form_Persona",
     own() {
@@ -213,14 +215,71 @@ export const TABS = [
   },
 ];
 
-export function getOptions(){
+// !Validate inputs before switching tabs
+function postRevision(form) {
+  let valid = true;
+  form.querySelectorAll("input").forEach((input) => {
+    if (
+      !input.className.includes("is-invalid") &&
+      !input.className.includes("is-valid")
+    ) {
+      $(`#${input.id}`).addClass("is-invalid");
+      return (valid = false);
+    } else if (input.className.includes("is-invalid")) {
+      return (valid = false);
+    }
+  });
+  return valid;
+}
+
+// !input verifier
+export function inputQualifier(form) {
+  form.querySelectorAll("input").forEach((input) => {
+    input.addEventListener("input", function (e) {
+      const type = REGLAS.find((regla) => regla.id === `${this.type}`);
+      type[`${this.type}`](this, e)
+        ? $(this).removeClass("is-invalid").addClass("is-valid")
+        : $(this).removeClass("is-valid").addClass("is-invalid");
+    });
+  });
+}
+
+// !Form navigation
+// !navigation handler
+function nextTab(id) {
+  $(`#nav_${id.toLowerCase()}_tab`).addClass("valid");
+  let tab = TABS.find((tab) => tab.form === id);
+  tab.next();
+}
+
+function previousTab(id) {
+  let tab = TABS.find((tab) => tab.form === id);
+  tab.before();
+}
+
+// !navigation listener
+export function navigationTab(form) {
+  form.querySelectorAll('button[role="navigation"]').forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (btn.id.includes("next") && postRevision(form)) {
+        nextTab(form.id);
+      }
+      if (btn.id.includes("previus")) {
+        previousTab(form.id);
+      }
+    });
+  });
+}
+
+export function getOptions() {
   $.ajax({
     type: "POST",
     url: "./controller/controller.php",
     data: "opciones=1",
     success: function (response) {
-      console.log(response)
-      return response
+      console.log(response);
+      return response;
     },
   });
 }
