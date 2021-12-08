@@ -120,7 +120,22 @@ const REGLAS = [
       }
     },
   },
+  {
+    id: "select-one",
+    select: function (select) {
+      return select.value != "0" ? true : false;
+    },
+  },
 ];
+
+// !Preset todays date
+export function presetDay() {
+  var now = new Date();
+  var day = ("0" + now.getDate()).slice(-2);
+  var month = ("0" + (now.getMonth() + 1)).slice(-2);
+  var today = now.getFullYear() + "-" + month + "-" + day;
+  $("#form_Persona_Fecha").val(today);
+}
 
 // !Tabs Boostrap instances
 var tabFormPersona = document.querySelector("#nav_form_persona_tab");
@@ -134,6 +149,63 @@ var showTabDocumentos = new bootstrap.Tab(tabFormDocumentos);
 
 var tabFormModalidad = document.querySelector("#nav_form_modalidad_tab");
 var showTabModalidad = new bootstrap.Tab(tabFormModalidad);
+
+// !Validate inputs before switching tabs
+function postRevision(form) {
+  return inputsVerifier(form) && selectsVerifier(form) ? true : false;
+}
+
+function inputsVerifier(form) {
+  form.querySelectorAll("input").forEach((input) => {
+    if (
+      !input.className.includes("is-invalid") &&
+      !input.className.includes("is-valid")
+    ) {
+      $(`#${input.id}`).addClass("is-invalid");
+      return false;
+    } else if (input.className.includes("is-invalid")) {
+      return false;
+    }
+  });
+  return true;
+}
+
+function selectsVerifier(form) {
+  form.querySelectorAll("select").forEach((select) => {
+    if (
+      !select.className.includes("is-invalid") &&
+      !select.className.includes("is-valid")
+    ) {
+      $(`#${select.id}`).addClass("is-invalid");
+      return false;
+    } else if (select.className.includes("is-invalid")) {
+      return false;
+    }
+  });
+  return true;
+}
+
+// !input verifier
+export function inputQualifier(form) {
+  form.querySelectorAll("input").forEach((input) => {
+    input.addEventListener("input", function (e) {
+      const type = REGLAS.find((regla) => regla.id === `${this.type}`);
+      type[`${this.type}`](this, e)
+        ? $(this).removeClass("is-invalid").addClass("is-valid")
+        : $(this).removeClass("is-valid").addClass("is-invalid");
+    });
+  });
+  form.querySelectorAll("select").forEach((select) => {
+    select.addEventListener("input", function (e) {
+      const type = REGLAS.find((regla) => regla.id === "select-one");
+      type["select"](select)
+        ? $(this).removeClass("is-invalid").addClass("is-valid")
+        : $(this).removeClass("is-valid").addClass("is-invalid");
+    });
+  });
+}
+
+// !*navigation
 
 // !Tabs methods
 const TABS = [
@@ -215,36 +287,6 @@ const TABS = [
   },
 ];
 
-// !Validate inputs before switching tabs
-function postRevision(form) {
-  let valid = true;
-  form.querySelectorAll("input").forEach((input) => {
-    if (
-      !input.className.includes("is-invalid") &&
-      !input.className.includes("is-valid")
-    ) {
-      $(`#${input.id}`).addClass("is-invalid");
-      return (valid = false);
-    } else if (input.className.includes("is-invalid")) {
-      return (valid = false);
-    }
-  });
-  return valid;
-}
-
-// !input verifier
-export function inputQualifier(form) {
-  form.querySelectorAll("input").forEach((input) => {
-    input.addEventListener("input", function (e) {
-      const type = REGLAS.find((regla) => regla.id === `${this.type}`);
-      type[`${this.type}`](this, e)
-        ? $(this).removeClass("is-invalid").addClass("is-valid")
-        : $(this).removeClass("is-valid").addClass("is-invalid");
-    });
-  });
-}
-
-// !Form navigation
 // !navigation handler
 function nextTab(id) {
   $(`#nav_${id.toLowerCase()}_tab`).addClass("valid");
@@ -265,14 +307,55 @@ export function navigationTab(form) {
       if (btn.id.includes("next") && postRevision(form)) {
         nextTab(form.id);
       }
+      if (!postRevision(form)) {
+        $(`#nav_${form.id.toLowerCase()}_tab`).removeClass("valid");
+      }
       if (btn.id.includes("previus")) {
         previousTab(form.id);
+      }
+      if (btn.id.includes("submit")) {
+        submit();
       }
     });
   });
 }
 
-export function getOptions() {
+// !Form data handler
+const DATA = [];
+function saveData(form) {
+  let inputs = [];
+  form.querySelectorAll("input").forEach((input) => {
+    inputs = [
+      ...inputs,
+      {
+        id: input.id,
+        val: input.type === "file" ? input.files[0] : input.value,
+      },
+    ];
+  });
+  form.querySelectorAll("select").forEach((select) => {
+    inputs = [
+      ...inputs,
+      {
+        id: select.id,
+        val: select.value,
+      },
+    ];
+  });
+  DATA.push({ id: form.id, data: inputs });
+}
+
+// !Submit function
+function submit() {
+  document.querySelectorAll('form[class="form"]').forEach((form) => {
+    saveData(form);
+  });
+  console.log(DATA); // TODO: modal
+}
+
+
+//
+function getOptions() {
   $.ajax({
     type: "POST",
     url: "./controller/controller.php",
@@ -280,6 +363,100 @@ export function getOptions() {
     success: function (response) {
       console.log(response);
       return response;
+    },
+  });
+}
+
+// !Ajax query
+$("#formulario_persona").submit(function (event) {
+  event.preventDefault();
+  enviarApersona();
+});
+
+$("#formulario_empresa").submit(function (event) {
+  event.preventDefault();
+  enviarAempresa();
+});
+
+$("#formulario_archivos").submit(function (event) {
+  event.preventDefault();
+  var f = $(this);
+  var formData = new FormData(document.getElementById("formulario_archivos"));
+  console.log(formData);
+  enviarAarchivos(formData);
+});
+
+$("#formulario_modalidad").submit(function (event) {
+  event.preventDefault();
+  enviarAmodalidad();
+});
+
+function enviarApersona() {
+  console.log("ejecutado");
+  let datos = $("#formulario_persona").serialize(); // almacena los datos name y los lleva a un arreglo
+  // console.log(datos);
+  $.ajax({
+    type: "post",
+    url: "formulario_persona.php",
+    data: datos,
+    success: function (texto) {
+      if (texto.trim() === "exito") {
+        correctoPersona();
+      } else {
+        phperror(texto);
+      }
+    },
+  });
+}
+
+function enviarAempresa() {
+  console.log("Empresa");
+  let datos = $("#formulario_empresa").serialize();
+  $.ajax({
+    type: "post",
+    url: "formulario_empresa.php",
+    data: datos,
+    success: function (texto) {
+      if (texto.trim() === "exito") {
+        correctoEmpresa();
+      } else {
+        phperrorEmpresa(texto);
+      }
+    },
+  });
+}
+
+function enviarAarchivos(formData) {
+  console.log("Arcivos");
+  $.ajax({
+    type: "post",
+    url: "formulario_archivos.php",
+    data: formData,
+    contentType: false,
+    processData: false,
+    success: function (texto) {
+      if (texto.trim() === "exito") {
+        correctoArchivos();
+      } else {
+        phperrorArchivos(texto);
+      }
+    },
+  });
+}
+
+function enviarAmodalidad() {
+  console.log("Modalidad");
+  let datos = $("#formulario_modalidad").serialize();
+  $.ajax({
+    type: "post",
+    url: "formulario_modalidad.php",
+    data: datos,
+    success: function (texto) {
+      if (texto.trim() === "exito") {
+        correctoModalidad();
+      } else {
+        phperrorModalidad(texto);
+      }
     },
   });
 }

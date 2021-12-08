@@ -300,6 +300,7 @@ $opciones = $modelo->getData("SELECT id, nombre FROM public.modalidad_tramite_e1
                         <div class="row gap-3 justify-content-md-center">
                             <div class="mb-3">
                                 <select id="opciones" class="form-select" aria-label="Default select example">
+                                    <option value="0" selected>Seleciona una opción</option>
                                     <?php foreach ($opciones as $opcion) : ?>
                                         <option value="<?= $opcion->id ?>"><?= $opcion->nombre ?></option>
                                     <?php endforeach; ?>
@@ -307,7 +308,7 @@ $opciones = $modelo->getData("SELECT id, nombre FROM public.modalidad_tramite_e1
                             </div>
                         </div>
                         <button class="btn btn-primary" role="navigation" id="previusTabM">Anterior</button>
-                        <button class="btn btn-primary" role="navigation" id="endForm">Finalizar</button>
+                        <button class="btn btn-primary" role="navigation" id="submit">Finalizar</button>
                     </form>
                 </div>
             </div>
